@@ -1,0 +1,13 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "rewrites": [
+    {
+      "source": "/:owner/:repo/releases/download/:tag/:asset",
+      "destination": "/api/:owner/:repo/releases/download/:tag/:asset"
+    },
+    {
+      "source": "/:owner/:repo/archive/:ref*",
+      "destination": "/api/:owner/:repo/archive/:ref*"
+    }
+  ]
+}

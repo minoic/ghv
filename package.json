@@ -1,0 +1,6 @@
+{
+  "name": "ghv",
+  "version": "1.0.0",
+  "private": true,
+  "description": "GitHub Release 下载代理：接受替换过域名的 release 下载链接，代为下载并返回文件"
+}
