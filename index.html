@@ -4,71 +4,199 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>ghv - GitHub Release 下载代理</title>
+<script src="https://cdn.jsdelivr.net/npm/marked@12.0.0/marked.min.js"></script>
 <style>
-  * { box-sizing: border-box; }
-  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "PingFang SC", "Microsoft YaHei", sans-serif; max-width: 720px; margin: 0 auto; padding: 40px 20px; background: #0d1117; color: #e6edf3; }
-  h1 { font-size: 28px; margin-bottom: 8px; }
-  p.desc { color: #8b949e; margin-top: 0; }
-  .card { background: #161b22; border: 1px solid #30363d; border-radius: 12px; padding: 20px; margin: 16px 0; }
-  label { display: block; font-size: 14px; color: #8b949e; margin-bottom: 8px; }
-  input[type=text] { width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #30363d; background: #0d1117; color: #e6edf3; font-size: 14px; }
-  .row { display: flex; gap: 10px; margin-top: 12px; flex-wrap: wrap; }
-  button, a.btn { padding: 10px 18px; border-radius: 8px; border: 1px solid #30363d; background: #238636; color: #fff; font-size: 14px; cursor: pointer; text-decoration: none; display: inline-block; }
-  button.secondary { background: #21262d; }
-  button:hover, a.btn:hover { filter: brightness(1.15); }
-  #out { word-break: break-all; font-size: 13px; background: #0d1117; border: 1px dashed #30363d; border-radius: 8px; padding: 12px; margin-top: 12px; min-height: 44px; color: #79c0ff; }
-  code { background: #21262d; padding: 2px 6px; border-radius: 6px; font-size: 13px; }
-  .hint { font-size: 13px; color: #8b949e; line-height: 1.8; }
+* { box-sizing: border-box; }
+body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "PingFang SC", "Microsoft YaHei", sans-serif; max-width: 860px; margin: 0 auto; padding: 40px 20px; background: #0d1117; color: #e6edf3; }
+h1 { font-size: 28px; margin-bottom: 8px; }
+p.desc { color: #8b949e; margin-top: 0; }
+.card { background: #161b22; border: 1px solid #30363d; border-radius: 12px; padding: 20px; margin: 16px 0; }
+label { display: block; font-size: 14px; color: #8b949e; margin-bottom: 8px; }
+input[type=text], select { width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #30363d; background: #0d1117; color: #e6edf3; font-size: 14px; }
+select { cursor: pointer; }
+.row { display: flex; gap: 10px; margin-top: 12px; flex-wrap: wrap; }
+button, a.btn { padding: 10px 18px; border-radius: 8px; border: 1px solid #30363d; background: #238636; color: #fff; font-size: 14px; cursor: pointer; text-decoration: none; display: inline-block; }
+button.secondary { background: #21262d; }
+button:hover, a.btn:hover { filter: brightness(1.15); }
+button:disabled { opacity: .5; cursor: wait; }
+code { background: #21262d; padding: 2px 6px; border-radius: 6px; font-size: 13px; }
+.hint { font-size: 13px; color: #8b949e; line-height: 1.8; }
+#out { word-break: break-all; font-size: 13px; background: #0d1117; border: 1px dashed #30363d; border-radius: 8px; padding: 12px; margin-top: 12px; min-height: 44px; color: #79c0ff; }
+.meta { display: flex; gap: 12px; flex-wrap: wrap; font-size: 13px; color: #8b949e; margin: 8px 0; }
+.meta b { color: #e6edf3; }
+ pills span, .pill { background: #21262d; border: 1px solid #30363d; border-radius: 20px; padding: 2px 10px; font-size: 12px; }
+.asset { display: flex; gap: 10px; align-items: center; justify-content: space-between; padding: 10px 12px; border: 1px solid #30363d; border-radius: 8px; margin-top: 8px; background: #0d1117; flex-wrap: wrap; }
+.asset .name { font-size: 13px; word-break: break-all; flex: 1; min-width: 200px; }
+.asset .sub { font-size: 12px; color: #8b949e; }
+.asset .ops { display: flex; gap: 8px; }
+.asset .ops a, .asset .ops button { padding: 6px 12px; font-size: 12px; }
+.readme { background: #0d1117; border: 1px solid #30363d; border-radius: 8px; padding: 16px 20px; margin-top: 12px; }
+.readme h1, .readme h2, .readme h3 { border-bottom: 1px solid #21262d; padding-bottom: 6px; }
+.readme pre { background: #161b22; padding: 12px; border-radius: 8px; overflow: auto; }
+.readme code { background: #21262d; }
+.readme img { max-width: 100%; }
+.readme a { color: #79c0ff; }
+.readme table { border-collapse: collapse; width: 100%; }
+.readme th, .readme td { border: 1px solid #30363d; padding: 6px 10px; }
+.err { color: #ff7b72; font-size: 13px; margin-top: 10px; }
+.loading { color: #8b949e; font-size: 13px; margin-top: 10px; }
+.rel-body { font-size: 12px; color: #8b949e; white-space: pre-wrap; max-height: 160px; overflow: auto; background: #0d1117; border: 1px dashed #30363d; border-radius: 8px; padding: 10px; margin-top: 10px; }
+.examples { font-size: 13px; margin-top: 10px; }
+.examples a { color: #79c0ff; cursor: pointer; margin-right: 12px; text-decoration: underline; }
 </style>
 </head>
 <body>
-  <h1>ghv · GitHub Release 下载代理</h1>
-  <p class="desc">把 <code>github.com</code> 换成当前域名，服务端代你下载并返回文件。</p>
-
-  <div class="card">
-    <label>粘贴 GitHub Release 下载链接</label>
-    <input id="in" type="text" placeholder="https://github.com/owner/repo/releases/download/v1.0/app.zip" />
-    <div class="row">
-      <button onclick="convert()">生成代理链接</button>
-      <button class="secondary" onclick="go()">直接下载</button>
-    </div>
-    <div id="out">转换后的链接会显示在这里…</div>
-  </div>
-
-  <div class="card hint">
-    <div>直连用法（替换域名即可）：</div>
-    <div><code>https://github.com/a/b/releases/download/v1.0/f.zip</code></div>
-    <div>→ <code><span id="host"></span>/a/b/releases/download/v1.0/f.zip</code></div>
-    <br />
-    <div>也支持 archive 包：<code>/owner/repo/archive/refs/heads/main.zip</code></div>
-    <div>或显式接口：<code>/api/proxy?url=...</code>、<code>/api/owner/repo/...</code></div>
-  </div>
-
+<h1>ghv &middot; GitHub Release 下载代理</h1>
+<p class="desc">把 <code>github.com</code> 换成当前域名即可代理下载；也可以在下面输入仓库名浏览 README 和 Release。</p>
+<div class="card">
+<label>输入仓库名（owner/repo）查看 README 与 Release</label>
+<input id="repoIn" type="text" placeholder="jpillora/chisel" />
+<div class="row">
+<button id="loadBtn" onclick="loadRepo()">加载仓库</button>
+<button class="secondary" onclick="fillExample('jpillora/chisel')">试试 chisel</button>
+</div>
+<div class="examples">示例：
+<a onclick="fillExample('jpillora/chisel')">jpillora/chisel</a>
+<a onclick="fillExample('cli/cli')">cli/cli</a>
+<a onclick="fillExample('BurntSushi/ripgrep')">BurntSushi/ripgrep</a>
+</div>
+<div id="repoStatus"></div>
+<div id="repoInfo" style="display:none">
+<h2 id="rName" style="margin:12px 0 4px;font-size:20px"></h2>
+<div class="meta" id="rMeta"></div>
+<div id="rDesc" style="font-size:14px;color:#8b949e"></div>
+<label style="margin-top:16px">选择版本</label>
+<select id="relSelect" onchange="renderAssets()"></select>
+<div id="relBody" class="rel-body" style="display:none"></div>
+<div id="assetList"></div>
+<label style="margin-top:16px">README</label>
+<div id="readmeBox" class="readme">暂无</div>
+</div>
+</div>
+<div class="card">
+<label>粘贴 GitHub Release 下载链接，转为代理链接</label>
+<input id="in" type="text" placeholder="https://github.com/owner/repo/releases/download/v1.0/app.zip" />
+<div class="row">
+<button onclick="convert()">生成代理链接</button>
+<button class="secondary" onclick="go()">直接下载</button>
+</div>
+<div id="out">转换后的链接会显示在这里…</div>
+</div>
+<div class="card hint">
+<div>直连用法（替换域名即可）：</div>
+<div><code>https://github.com/a/b/releases/download/v1.0/f.zip</code></div>
+<div>&rarr; <code><span id="host"></span>/a/b/releases/download/v1.0/f.zip</code></div>
+<br />
+<div>也支持 archive 包：<code>/owner/repo/archive/refs/heads/main.zip</code></div>
+<div>或显式接口：<code>/api/proxy?url=...</code>、<code>/api/repo?repo=owner/repo</code></div>
+</div>
 <script>
-  document.getElementById('host').textContent = location.origin;
-  function parseInput() {
-    const v = document.getElementById('in').value.trim();
-    if (!v) { alert('请先粘贴链接'); return null; }
-    let u;
-    try { u = new URL(v); }
-    catch { alert('链接格式不正确'); return null; }
-    // github.com 或已经是本站域名的链接都接受
-    const path = u.pathname + u.search + u.hash;
-    return location.origin + path;
-  }
-  function convert() {
-    const r = parseInput();
-    if (!r) return;
-    const out = document.getElementById('out');
-    out.innerHTML = '';
-    const a = document.createElement('a');
-    a.href = r; a.textContent = r; a.style.color = '#79c0ff';
-    out.appendChild(a);
-  }
-  function go() {
-    const r = parseInput();
-    if (r) location.href = r;
-  }
+document.getElementById('host').textContent = location.origin;
+let cache = null;
+function esc(s){ return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function fmtSize(n){ if(n==null) return '-'; if(n<1024) return n+' B'; if(n<1048576) return (n/1024).toFixed(1)+' KB'; if(n<1073741824) return (n/1048576).toFixed(1)+' MB'; return (n/1073741824).toFixed(2)+' GB'; }
+function fillExample(r){ document.getElementById('repoIn').value = r; loadRepo(); }
+function parseRepoInput(v){
+  v = (v||'').trim(); if(!v) return null;
+  try {
+    if(/^https?:\/\//i.test(v)){
+      const u = new URL(v);
+      const segs = u.pathname.split('/').filter(Boolean);
+      if(segs.length >= 2) return { owner: segs[0], repo: segs[1].replace(/\.git$/,'') };
+      return null;
+    }
+  } catch(e){ /* not a url, treat as repo */ }
+  const m = v.replace(/\.git$/,'').split('/').filter(Boolean);
+  if(m.length === 2) return { owner: m[0], repo: m[1] };
+  return null;
+}
+async function loadRepo(){
+  const status = document.getElementById('repoStatus');
+  const info = document.getElementById('repoInfo');
+  const btn = document.getElementById('loadBtn');
+  const parsed = parseRepoInput(document.getElementById('repoIn').value);
+  if(!parsed){ status.innerHTML = '<div class="err">请输入 owner/repo，例如 jpillora/chisel</div>'; return; }
+  btn.disabled = true;
+  status.innerHTML = '<div class="loading">加载中…</div>';
+  info.style.display = 'none';
+  try{
+    const r = await fetch('/api/repo?owner='+encodeURIComponent(parsed.owner)+'&repo='+encodeURIComponent(parsed.repo));
+    const data = await r.json();
+    if(!r.ok){ status.innerHTML = '<div class="err">'+esc(data.error||('请求失败 '+r.status))+'</div>'; return; }
+    cache = data;
+    status.innerHTML = '';
+    document.getElementById('rName').innerHTML = '<a style="color:#e6edf3;text-decoration:none" target="_blank" href="'+esc(data.repo.html_url)+'">'+esc(data.repo.full_name)+'</a>';
+    document.getElementById('rMeta').innerHTML =
+      '<span class="pill">★ '+esc(data.repo.stargazers_count==null?'?':data.repo.stargazers_count)+'</span>' +
+      (data.repo.language ? '<span class="pill">'+esc(data.repo.language)+'</span>' : '') +
+      '<span>'+esc(data.releases.length)+' 个 release</span>';
+    document.getElementById('rDesc').textContent = data.repo.description || '';
+    const sel = document.getElementById('relSelect');
+    sel.innerHTML = '';
+    data.releases.forEach((rel,i)=>{
+      const o = document.createElement('option');
+      o.value = i;
+      o.textContent = (rel.name||rel.tag_name) + '  (' + rel.tag_name + ')' + (rel.prerelease?'  [pre]':'') + '  ·  ' + rel.assets.length + ' 个文件';
+      sel.appendChild(o);
+    });
+    if(!data.releases.length){
+      sel.innerHTML = '<option value="">该仓库暂无 release</option>';
+    }
+    renderAssets();
+    const rb = document.getElementById('readmeBox');
+    if(data.readme && data.readme.markdown){
+      try { rb.innerHTML = marked.parse(data.readme.markdown); }
+      catch(e){ rb.textContent = data.readme.markdown.slice(0,8000); }
+      rb.querySelectorAll('a').forEach(a=>{ a.target='_blank'; });
+    } else { rb.textContent = '该仓库没有 README'; }
+    info.style.display = 'block';
+    const url = new URL(location.href);
+    url.searchParams.set('repo', parsed.owner+'/'+parsed.repo);
+    history.replaceState(null,'',url.toString());
+  }catch(e){ status.innerHTML = '<div class="err">加载失败：'+esc(e.message)+'</div>'; }
+  finally{ btn.disabled = false; }
+}
+function renderAssets(){
+  const list = document.getElementById('assetList');
+  const body = document.getElementById('relBody');
+  list.innerHTML = ''; body.style.display='none'; body.textContent='';
+  if(!cache || !cache.releases.length) return;
+  const rel = cache.releases[Number(document.getElementById('relSelect').value)||0];
+  if(!rel) return;
+  if(rel.body){ body.style.display='block'; body.textContent = rel.body; }
+  if(!rel.assets.length){ list.innerHTML = '<div class="hint">该版本没有附件</div>'; return; }
+  rel.assets.forEach(a=>{
+    const div = document.createElement('div');
+    div.className = 'asset';
+    const link = location.origin + a.proxy_path;
+    div.innerHTML =
+      '<div class="name">'+esc(a.name)+'<div class="sub">'+fmtSize(a.size)+' · 下载 '+esc(a.download_count==null?'?':a.download_count)+' 次</div></div>' +
+      '<div class="ops"><a class="btn" href="'+esc(a.proxy_path)+'">下载</a>' +
+      '<button class="secondary" data-link="'+esc(link)+'">复制链接</button></div>';
+    list.appendChild(div);
+  });
+  list.querySelectorAll('button[data-link]').forEach(b=>{
+    b.onclick = ()=>{ navigator.clipboard.writeText(b.getAttribute('data-link')).then(()=>{ b.textContent='已复制'; setTimeout(()=>b.textContent='复制链接',1500); }); };
+  });
+}
+function parseLinkInput(){
+  const v = document.getElementById('in').value.trim();
+  if(!v){ alert('请先粘贴链接'); return null; }
+  let u; try{ u = new URL(v); }catch{ alert('链接格式不正确'); return null; }
+  return location.origin + u.pathname + u.search + u.hash;
+}
+function convert(){
+  const r = parseLinkInput(); if(!r) return;
+  const out = document.getElementById('out'); out.innerHTML = '';
+  const a = document.createElement('a'); a.href=r; a.textContent=r; a.style.color='#79c0ff';
+  out.appendChild(a);
+}
+function go(){ const r = parseLinkInput(); if(r) location.href = r; }
+(function(){
+  const q = new URLSearchParams(location.search).get('repo');
+  if(q){ document.getElementById('repoIn').value = q; loadRepo(); }
+  document.getElementById('repoIn').addEventListener('keydown', e=>{ if(e.key==='Enter') loadRepo(); });
+})();
 </script>
 </body>
 </html>
