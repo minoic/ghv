@@ -2,12 +2,20 @@
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "rewrites": [
     {
+      "source": "/api/:owner/:repo/releases/download/:tag/:asset",
+      "destination": "/api/download?owner=:owner&repo=:repo&tag=:tag&asset=:asset"
+    },
+    {
+      "source": "/api/:owner/:repo/archive/:ref*",
+      "destination": "/api/download?owner=:owner&repo=:repo&ref=:ref*&type=archive"
+    },
+    {
       "source": "/:owner/:repo/releases/download/:tag/:asset",
-      "destination": "/api/:owner/:repo/releases/download/:tag/:asset"
+      "destination": "/api/download?owner=:owner&repo=:repo&tag=:tag&asset=:asset"
     },
     {
       "source": "/:owner/:repo/archive/:ref*",
-      "destination": "/api/:owner/:repo/archive/:ref*"
+      "destination": "/api/download?owner=:owner&repo=:repo&ref=:ref*&type=archive"
     }
   ]
 }
