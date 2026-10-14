@@ -24,7 +24,7 @@ code { background: #21262d; padding: 2px 6px; border-radius: 6px; font-size: 13p
 #out { word-break: break-all; font-size: 13px; background: #0d1117; border: 1px dashed #30363d; border-radius: 8px; padding: 12px; margin-top: 12px; min-height: 44px; color: #79c0ff; }
 .meta { display: flex; gap: 12px; flex-wrap: wrap; font-size: 13px; color: #8b949e; margin: 8px 0; }
 .meta b { color: #e6edf3; }
- pills span, .pill { background: #21262d; border: 1px solid #30363d; border-radius: 20px; padding: 2px 10px; font-size: 12px; }
+.pill { background: #21262d; border: 1px solid #30363d; border-radius: 20px; padding: 2px 10px; font-size: 12px; }
 .asset { display: flex; gap: 10px; align-items: center; justify-content: space-between; padding: 10px 12px; border: 1px solid #30363d; border-radius: 8px; margin-top: 8px; background: #0d1117; flex-wrap: wrap; }
 .asset .name { font-size: 13px; word-break: break-all; flex: 1; min-width: 200px; }
 .asset .sub { font-size: 12px; color: #8b949e; }
@@ -38,6 +38,9 @@ code { background: #21262d; padding: 2px 6px; border-radius: 6px; font-size: 13p
 .readme a { color: #79c0ff; }
 .readme table { border-collapse: collapse; width: 100%; }
 .readme th, .readme td { border: 1px solid #30363d; padding: 6px 10px; }
+.banner { font-size: 13px; border-radius: 8px; padding: 10px 14px; margin-top: 12px; display: none; }
+.banner.warn { display: block; background: #3d2b00; border: 1px solid #9e6a03; color: #ffa657; }
+.banner.ok { display: block; background: #0f2c1a; border: 1px solid #1a7f37; color: #7ee787; }
 .err { color: #ff7b72; font-size: 13px; margin-top: 10px; }
 .loading { color: #8b949e; font-size: 13px; margin-top: 10px; }
 .rel-body { font-size: 12px; color: #8b949e; white-space: pre-wrap; max-height: 160px; overflow: auto; background: #0d1117; border: 1px dashed #30363d; border-radius: 8px; padding: 10px; margin-top: 10px; }
@@ -47,6 +50,7 @@ code { background: #21262d; padding: 2px 6px; border-radius: 6px; font-size: 13p
 </head>
 <body>
 <h1>ghv &middot; GitHub Release 下载代理</h1>
+<div id="dlBanner" class="banner"></div>
 <p class="desc">把 <code>github.com</code> 换成当前域名即可代理下载；也可以在下面输入仓库名浏览 README 和 Release。</p>
 <div class="card">
 <label>输入仓库名（owner/repo）查看 README 与 Release</label>
@@ -93,6 +97,19 @@ code { background: #21262d; padding: 2px 6px; border-radius: 6px; font-size: 13p
 <script>
 document.getElementById('host').textContent = location.origin;
 let cache = null;
+let downloadEnabled = true;
+function updateDlBanner(){
+  const b = document.getElementById('dlBanner');
+  if(downloadEnabled){ b.className = 'banner'; b.style.display = 'none'; b.textContent = ''; }
+  else { b.className = 'banner warn'; b.textContent = '提示：本站文件下载功能已关闭（ALLOW_DOWNLOAD=0），仓库浏览、README 与版本列表仍可正常使用。'; }
+}
+async function refreshDownloadStatus(){
+  try{
+    const r = await fetch('/api/status');
+    const d = await r.json();
+    if(typeof d.download_enabled === 'boolean'){ downloadEnabled = d.download_enabled; updateDlBanner(); if(cache) renderAssets(); }
+  }catch(e){ /* 状态接口失败时默认允许下载，不打扰用户 */ }
+}
 function esc(s){ return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 function fmtSize(n){ if(n==null) return '-'; if(n<1024) return n+' B'; if(n<1048576) return (n/1024).toFixed(1)+' KB'; if(n<1073741824) return (n/1048576).toFixed(1)+' MB'; return (n/1073741824).toFixed(2)+' GB'; }
 function fillExample(r){ document.getElementById('repoIn').value = r; loadRepo(); }
@@ -124,6 +141,7 @@ async function loadRepo(){
     const data = await r.json();
     if(!r.ok){ status.innerHTML = '<div class="err">'+esc(data.error||('请求失败 '+r.status))+'</div>'; return; }
     cache = data;
+    if(typeof data.download_enabled === 'boolean'){ downloadEnabled = data.download_enabled; updateDlBanner(); }
     status.innerHTML = '';
     document.getElementById('rName').innerHTML = '<a style="color:#e6edf3;text-decoration:none" target="_blank" href="'+esc(data.repo.html_url)+'">'+esc(data.repo.full_name)+'</a>';
     document.getElementById('rMeta').innerHTML =
@@ -165,13 +183,14 @@ function renderAssets(){
   if(!rel) return;
   if(rel.body){ body.style.display='block'; body.textContent = rel.body; }
   if(!rel.assets.length){ list.innerHTML = '<div class="hint">该版本没有附件</div>'; return; }
+  if(!downloadEnabled){ const w = document.createElement('div'); w.className = 'banner warn'; w.textContent = '文件下载功能已关闭，仅可浏览版本与文件列表。'; list.appendChild(w); }
   rel.assets.forEach(a=>{
     const div = document.createElement('div');
     div.className = 'asset';
     const link = location.origin + a.proxy_path;
     div.innerHTML =
       '<div class="name">'+esc(a.name)+'<div class="sub">'+fmtSize(a.size)+' · 下载 '+esc(a.download_count==null?'?':a.download_count)+' 次</div></div>' +
-      '<div class="ops"><a class="btn" href="'+esc(a.proxy_path)+'">下载</a>' +
+      '<div class="ops">' + (downloadEnabled ? '<a class="btn" href="'+esc(a.proxy_path)+'">下载</a>' : '<button class="secondary" disabled title="下载功能已关闭">已关闭</button>') +
       '<button class="secondary" data-link="'+esc(link)+'">复制链接</button></div>';
     list.appendChild(div);
   });
@@ -191,10 +210,11 @@ function convert(){
   const a = document.createElement('a'); a.href=r; a.textContent=r; a.style.color='#79c0ff';
   out.appendChild(a);
 }
-function go(){ const r = parseLinkInput(); if(r) location.href = r; }
+function go(){ if(!downloadEnabled){ alert('本站文件下载功能已关闭（ALLOW_DOWNLOAD=0）'); return; } const r = parseLinkInput(); if(r) location.href = r; }
 (function(){
   const q = new URLSearchParams(location.search).get('repo');
   if(q){ document.getElementById('repoIn').value = q; loadRepo(); }
+  refreshDownloadStatus();
   document.getElementById('repoIn').addEventListener('keydown', e=>{ if(e.key==='Enter') loadRepo(); });
 })();
 </script>

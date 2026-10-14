@@ -3,6 +3,8 @@
 //   GET /api/repo?repo=jpillora/chisel
 // 返回：仓库信息 + README(markdown) + release 列表（含每个 asset 的本站代理路径）
 
+const { isDownloadAllowed } = require('../lib/proxy.js');
+
 const GITHUB_API = 'https://api.github.com';
 const VALID = /^[A-Za-z0-9_.-]+$/;
 
@@ -117,6 +119,7 @@ module.exports = async (req, res) => {
     res.setHeader('Cache-Control', 'public, s-maxage=300, stale-while-revalidate=600');
     res.setHeader('content-type', 'application/json; charset=utf-8');
     return res.status(200).json({
+      download_enabled: isDownloadAllowed(),
       repo: {
         full_name: r.full_name,
         description: r.description,
